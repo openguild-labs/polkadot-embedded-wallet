@@ -1,0 +1,111 @@
+//! Encryption-related types with public information  
+//!
+//! Vault supports all three encryption algorithms currently used by the
+//! Substrate: `Ed25519`, `Sr25519`, and `Ecdsa`.
+//!
+//! In addition to [`MultiSigner`](https://docs.rs/sp-runtime/6.0.0/sp_runtime/enum.MultiSigner.html)
+//! and [`MultiSignature`](https://docs.rs/sp-runtime/6.0.0/sp_runtime/enum.MultiSignature.html),
+//! Vault uses similarly structured enums [`Encryption`] with only encryption
+//! algorithm information and [`SufficientCrypto`] with encryption, public key
+//! and data signature combined.  
+//!
+//! Networks are expected to use certain encryption algorithm [`Encryption`].
+//! This is reflected in [`OrderedNetworkSpecs`](crate::network_specs::OrderedNetworkSpecs)
+//! and in [`NetworkSpecs`](crate::network_specs::NetworkSpecs)
+//! field `encryption`, and also in corresponding database keys
+//! [`NetworkSpecsKey`](crate::keyring::NetworkSpecsKey).
+//! In principle, network could support more than one encryption algorithm,
+//! in this case there would be more than one database entry for the network
+//! specs with different keys.  
+//! Default networks (Polkadot, Kusama, and Westend) all operate with `Sr25519`
+//! encryption.  
+//!
+//! Each address in Vault has an associated encryption algorithm
+//! [`Encryption`]. This is reflected in [`AddressDetails`](crate::users::AddressDetails)
+//! field `encryption` and in corresponding database key
+//! [`AddressKey`](crate::keyring::AddressKey). Address is associated with a
+//! network, and only matching [`Encryption`] is allowed.
+//! Address is generated from seed phrase and derivation, public keys produced
+//! for different encryption algorithms with same seed phrase and derivation
+//! are totally different.  
+//!
+//! Both general verifier and each individual network
+//! [`CurrentVerifier`](crate::network_specs::CurrentVerifier) also have
+//! associated [`Encryption`]. Encryption algorithm used by verifiers could be
+//! different from the one used by the network they are verifying, it is used
+//! only to check the validity of the signed update.  
+//!
+//! Vault receives Substrate transactions starting in hexadecimal recording
+//! with `53xxyy` where `xx` corresponds to the encryption type.
+//!
+//! Possible signature schemes are:
+//!
+//! - `00` for `Ed25519`
+//! - `01` for `Sr25519`
+//! - `02` for `Ecdsa`
+//!
+//! To be able to sign transaction in Vault, address producing transaction
+//! must be associated with declared encryption algorithm and with transaction
+//! network with. Also, transaction network must have entry in the database
+//! having declared encryption algorithm.
+//!
+//! Updating transaction, in addition to three variants above, also may be
+//! unsigned, with `ff` as an encryption piece. `ff` means only that no
+//! signature is provided, it has no corresponding value in [`Encryption`].
+//!
+//! [`SufficientCrypto`] is a construction that could be created in Vault
+//! and exported through static QR code. It contains encryption algorithm,
+//! public key and corresponding signature for some data. Data could be network
+//! specs, network metadata, or types information, that is loaded into Vault.
+//! The information in [`SufficientCrypto`] is sufficient to verify the updating
+//! payload validity elsewhere.
+//!
+//! This way Vault user can produce verified updating transactions with
+//! own signatures.  
+//!
+//! [`SufficientCrypto`] could be used by the hot-side client to generate QR
+//! codes with updating payloads signed by an address from Vault.
+//!
+//! Vault keeps track of the generated [`SufficientCrypto`] QR codes in
+//! history log.  
+use crate::error::DefinitionError;
+use codec::{Decode, Encode};
+
+/// Encryption algorithm
+///
+/// Lists all encryption algorithms supported by Substrate
+#[derive(Copy, Clone, Debug, Decode, Encode, PartialEq, Eq)]
+pub enum Encryption {
+    Ed25519,
+    Sr25519,
+    Ecdsa,
+    Ethereum,
+}
+
+impl Encryption {
+    /// Display the encryption  
+    ///
+    /// This is used both in error printing and in json data exports  
+    pub fn show(&self) -> String {
+        match &self {
+            Encryption::Ed25519 => String::from("ed25519"),
+            Encryption::Sr25519 => String::from("sr25519"),
+            Encryption::Ecdsa => String::from("ecdsa"),
+            Encryption::Ethereum => String::from("ethereum"),
+        }
+    }
+}
+
+impl TryFrom<String> for Encryption {
+    type Error = DefinitionError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "ed25519" => Ok(Encryption::Ed25519),
+            "sr25519" => Ok(Encryption::Sr25519),
+            "ecdsa" => Ok(Encryption::Ecdsa),
+            "ethereum" => Ok(Encryption::Ethereum),
+            _ => Err(DefinitionError::UnknownEncryption(value)),
+        }
+    }
+}

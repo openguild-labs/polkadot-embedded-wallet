@@ -1,0 +1,8 @@
+yarn-error.log
+*.log
+
+# docs
+docs/book
+
+# rust
+*/target
