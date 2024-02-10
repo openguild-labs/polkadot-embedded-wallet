@@ -7,11 +7,12 @@ mod network_spec;
 mod users;
 
 use bip39::{Language, Mnemonic, MnemonicType};
-use definitions::{Encryption, IdentityRecord, NetworkSpecs, NetworkSpecsKey};
+use definitions::{Encryption, IdentityRecord};
 use error::{IdentityError, IdentityResult};
 use helpers::multisigner_to_public;
 use keyring::AddressKey;
 use lazy_static::lazy_static;
+use network_spec::{NetworkSpecs, NetworkSpecsKey};
 use regex::Regex;
 use sp_core::{crypto::Zeroize, ecdsa, ed25519, sr25519, Pair};
 use sp_runtime::MultiSigner;

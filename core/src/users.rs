@@ -10,7 +10,7 @@
 
 use codec::{Decode, Encode};
 
-use crate::{definitions::Encryption, definitions::NetworkSpecsKey};
+use crate::{definitions::Encryption, network_spec::NetworkSpecsKey};
 
 /// Address key associated non-secret information stored in Vault database
 ///

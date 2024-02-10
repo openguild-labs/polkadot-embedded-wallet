@@ -3,8 +3,9 @@ use sp_core::H256;
 use sp_runtime::MultiSigner;
 
 use crate::helpers::multisigner_to_public;
+use crate::network_spec::NetworkSpecsKey;
 use crate::users::AddressDetails;
-use crate::{crypto::Encryption, definitions::NetworkSpecsKey, keyring::AddressKey};
+use crate::{crypto::Encryption, keyring::AddressKey};
 
 #[derive(Debug, thiserror::Error)]
 pub enum IdentityError {
