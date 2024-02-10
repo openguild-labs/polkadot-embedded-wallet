@@ -48,6 +48,10 @@ pub struct NetworkSpecs {
 
     /// Token name, to display balance-related values properly.  
     pub unit: String,
+
+    pub color: String,
+
+    pub address: String,
 }
 
 /// Key in `SPECSTREE` tree (cold database) and in `SPECSPREPTREE` (hot database)  
@@ -111,5 +115,55 @@ impl NetworkSpecsKey {
     /// Transform [`NetworkSpecsKey`] into `Vec<u8>` database key  
     pub fn key(&self) -> Vec<u8> {
         self.0.to_vec()
+    }
+}
+
+/// Event content for address generation or removal.
+#[derive(Debug, Decode, Encode, PartialEq, Eq, Clone)]
+pub struct IdentityRecord {
+    /// The name of the seed.
+    pub seed_name: String,
+    /// [`Encryption`] scheme of the seed.
+    pub encryption: Encryption,
+    /// Public key.
+    pub public_key: Vec<u8>,
+    /// - path with soft (`/`) and hard (`//`) derivations only, **without** password  
+    pub path: String,
+    /// - genesis hash of the network within which the address is  
+    pub network_genesis_hash: H256,
+}
+
+impl IdentityRecord {
+    pub fn new(
+        seed_name: String,
+        encryption: Encryption,
+        public_key: Vec<u8>,
+        path: String,
+        network_genesis_hash: H256,
+    ) -> Self {
+        Self {
+            seed_name,
+            encryption,
+            public_key,
+            path,
+            network_genesis_hash,
+        }
+    }
+
+    /// Generate [`IdentityHistory`] from parts  
+    pub fn get(
+        seed_name: &str,
+        encryption: &Encryption,
+        public_key: &[u8],
+        path: &str,
+        network_genesis_hash: H256,
+    ) -> Self {
+        Self {
+            seed_name: seed_name.to_string(),
+            encryption: encryption.to_owned(),
+            public_key: public_key.to_vec(),
+            path: path.to_string(),
+            network_genesis_hash,
+        }
     }
 }
